@@ -14,7 +14,7 @@ warnings.filterwarnings("ignore", category=UserWarning, module="schemdraw.backen
 # Set the backend to Agg
 matplotlib.use('Agg')
 
-
+# Use the matplotlib backend
 schemdraw.use('matplotlib')
 
 def move_to(drawing, target_pos, current_pos=None, diff_x=0, diff_y=0):
