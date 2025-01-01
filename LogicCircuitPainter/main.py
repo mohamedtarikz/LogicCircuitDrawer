@@ -41,27 +41,85 @@ def goto(drawing, start, end, len=1.0, diff_x=0, diff_y=0):
     ratio = len / length
     at_line(drawing, start, end, ratio, diff_x, diff_y)
 
-def draw_main():
+from enum import Enum
+
+class Gate(Enum):
+    Not = 1
+    Or = 2
+    And = 3
+
+class Node:
+    def __init__(self, position):
+        self.pos = position
+
+nodes = []
+
+def draw_line(drawing, start, end):
+    move_to(drawing, start)
+    drawing += elm.Line().to(end)
+
+def connect_nodes(drawing, node1: Node, node2: Node, gate: Gate):
+    if node1 is None and node2 is None:
+        raise Exception("You must specify node1 or node2")
+    if gate == Gate.Not:
+        if node1 is None and node2 is None:
+            raise Exception("You must specify node1 or node2")
+        if node1 is None:
+            move_to(drawing, node2.pos, diff_x=1)
+            not_gate = logic.Not().right()
+            drawing += not_gate
+            nodes.append(Node(not_gate.absanchors['out']))
+            draw_line(drawing, node2.pos, not_gate.absanchors['in1'])
+        elif node2 is None:
+            move_to(drawing, node1.pos, diff_x=1)
+            not_gate = logic.Not().right()
+            drawing += not_gate
+            nodes.append(Node(not_gate.absanchors['out']))
+            draw_line(drawing, node1.pos, not_gate.absanchors['in1'])
+    else:
+        move_to(drawing, (max(node2.pos[0],node1.pos[0]) + 1, (node2.pos[1] + node1.pos[1]) / 2))
+        if gate == Gate.And:
+            in_gate = logic.And().right()
+        elif gate == Gate.Or:
+            in_gate = logic.Or().right()
+        else:
+            raise Exception("Unexpected Gate!")
+        drawing += in_gate
+        nodes.append(Node(in_gate.absanchors['out']))
+        if node1.pos[1] > node2.pos[1]:
+            draw_line(drawing, node1.pos, in_gate.absanchors['in1'])
+            draw_line(drawing, node2.pos, in_gate.absanchors['in2'])
+        else:
+            draw_line(drawing, node1.pos, in_gate.absanchors['in2'])
+            draw_line(drawing, node2.pos, in_gate.absanchors['in1'])
+
+
+def main_draw(_vars):
     with Drawing() as d:
-        a = elm.Dot(open=True).label('A', loc='top')
-        a_line = elm.Line().down().length(5)
-        move_to(d, a.absanchors['center'], diff_x=1)
-        b = elm.Dot(open=True).label('B', loc='top')
-        b_line = elm.Line().down().length(5)
-
-        at_line(d, b_line.start, b_line.end, ratio=0.2)
-        elm.Dot()
-        elm.Line().right().length(1)
-
-        goto(d, a_line.start, a_line.end, len=1.5)
-        elm.Dot()
-        elm.Line().right().length(2)
-
-        logic.And().right().anchor('in2')
-
-        elm.Line().right().length(2).label('OUT', loc='bottom')
-
-        # Save the figure to a file
+        n = len(_vars)
+        for i in range(n):
+            init_dot = elm.Dot(open=True).label(_vars[i], loc='top')
+            d += init_dot
+            elm.Line().down().length(n)
+            dot = elm.Dot()
+            d += dot
+            nodes.append(Node(dot.absanchors['center']))
+            move_to(d, init_dot.absanchors['center'], diff_x=1)
+            n -= 1
+        while len(nodes):
+            a = nodes[-1]
+            nodes.pop()
+            if len(nodes):
+                b = nodes[-1]
+                nodes.pop()
+                connect_nodes(d, a, b, Gate.And)
         d.save('my_draw.jpg')
 
-draw_main()
+inputs = []
+
+n = int(input('Enter number of vars: '))
+
+for _ in range(n):
+    inputs.append(input('Enter variable: '))
+
+main_draw(inputs)
