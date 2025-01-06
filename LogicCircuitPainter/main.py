@@ -16,33 +16,23 @@ in_expr = input("Enter the expression: ")
 expr = sp.parse_expr(in_expr)  # '&' for AND, '|' for OR, '~' for NOT
 print("Parsed Expression:", expr)
 
-for node in expr.args:
-    print(node)
-
-# def parse_tree(expression):
-#     if expression.is_Atom:
-#         return {"type":"input", "val":str(expression)}
-#     elif isinstance(expression, sp.Not):
-#         return {"type":"NOT", "val":parse_tree(expression.args[0])}
-#     elif isinstance(expression, sp.And):
-#         return {"type":"AND", "val":[parse_tree(arg) for arg in expression.args]}
-#     elif isinstance(expression, sp.Or):
-#         return {"type":"OR", "val":[parse_tree(arg) for arg in expression.args]}
-#
 def postfix(expression):
+    '''
+    recursive function to convert the expression to a postfix expression
+
+    :return: list of postfix expression
+    '''
+
     if expression.is_Atom:
         return [str(expression)]
     elif isinstance(expression, sp.Not):
         return postfix(expression.args[0]) + ["~"]
     elif isinstance(expression, sp.Or):
-        return  sum((postfix(arg) for arg in expression.args),[]) + ["|"] * (len(expression.args) - 1)
+        return  sum((postfix(arg) for arg in expression.args), []) + ["|"] * (len(expression.args) - 1)
     elif isinstance(expression, sp.And):
         return sum((postfix(arg) for arg in expression.args), []) + ["&"] * (len(expression.args) - 1)
 
 post = postfix(expr)
-# tree = parse_tree(expr)
-# print(tree)
-print(post)
 
 # function to move drawing brush to a certain coordinate
 def move_to(drawing, target_pos, current_pos = None, diff_x=0, diff_y=0):
