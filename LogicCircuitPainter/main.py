@@ -1,36 +1,33 @@
+import math
+
 import sympy as sp
+
+import schemdraw
+from schemdraw import elements as elm
+from schemdraw import Drawing
+from schemdraw import logic
+
+from enum import Enum
+
+schemdraw.use('matplotlib') # to export image as .jpg not .svg
 
 in_expr = input("Enter the expression: ")
 
 expr = sp.parse_expr(in_expr)  # '&' for AND, '|' for OR, '~' for NOT
 print("Parsed Expression:", expr)
 
-def parse_tree(expression):
-    if expression.is_Atom:  # Input node (e.g., A, B, C)
-        return {"type": "INPUT", "value": str(expression)}
-    elif isinstance(expression, sp.Not):  # NOT gate
-        return {"type": "NOT", "inputs": [parse_tree(expression.args[0])]}
-    elif isinstance(expression, sp.And):  # AND gate
-        return {"type": "AND", "inputs": [parse_tree(arg) for arg in expression.args]}
-    elif isinstance(expression, sp.Or):  # OR gate
-        return {"type": "OR", "inputs": [parse_tree(arg) for arg in expression.args]}
-    else:
-        raise ValueError(f"Unsupported expression: {expression}")
-
-# Generate the tree
-tree = parse_tree(expr)
-
-import math
-
-# %matplotlib inline
-import schemdraw
-from schemdraw import elements as elm
-from schemdraw import Drawing
-from schemdraw import logic
-
-schemdraw.use('matplotlib')
-
+# function to move drawing brush to a certain coordinate
 def move_to(drawing, target_pos, current_pos = None, diff_x=0, diff_y=0):
+    '''
+    moves drawing brush to a specific coordinate
+
+    :param drawing: drawing canvas
+    :param target_pos: target coordinate
+    :param current_pos: current coordinate
+    :param diff_x: constant to be added to the x-coordinate of the target
+    :param diff_y: constant to be added to the y-coordinate of the target
+    '''
+
     if current_pos is None:
         current_pos = drawing.here
     dx = target_pos[0] - current_pos[0] + diff_x
@@ -38,11 +35,26 @@ def move_to(drawing, target_pos, current_pos = None, diff_x=0, diff_y=0):
     drawing.move(dx, dy)
 
 def magnitude(start, end):
+    '''
+    calculates the length between two points
+
+    :return: length between start and end
+    '''
+
     x = (end[0] - start[0]) ** 2
     y = (end[1] - start[1]) ** 2
     return math.sqrt(x + y)
 
 def from_path(drawing, start, end, ratio: float=1.0, diff_x=0, diff_y=0):
+    '''
+    moves drawing brush to a position on the line between two points (by ratio)
+
+    :param drawing: drawing canvas
+    :param ratio: how much of the line is before the brush
+    :param diff_x: constant to be added to the x-coordinate of the target
+    :param diff_y: constant to be added to the y-coordinate of the target
+    '''
+
     if ratio > 1 or ratio < 0 or start is None or end is None:
         raise ValueError("ratio must be between 0 and 1")
     x_pos = (end[0] - start[0]) * ratio
@@ -50,13 +62,25 @@ def from_path(drawing, start, end, ratio: float=1.0, diff_x=0, diff_y=0):
     move_to(drawing, (start[0] + x_pos, start[1] + y_pos), diff_x=diff_x, diff_y=diff_y)
 
 def at_path(drawing, start, end, len=1.0, diff_x=0, diff_y=0):
+    '''
+    moves drawing brush to a position on the line between two points (by length)
+
+    :param drawing: drawing canvas
+    :param len: length of the part of the line before the brush
+    :param diff_x: constant to be added to the x-coordinate of the target
+    :param diff_y: constant to be added to the y-coordinate of the target
+    '''
+
     length = magnitude(start, end)
     ratio = len / length
     from_path(drawing, start, end, ratio, diff_x, diff_y)
 
-from enum import Enum
 
 class Gate(Enum):
+    '''
+    Enumeration of GATES used in the circuit drawing
+    '''
+
     Not = 1
     Or = 2
     And = 3
@@ -68,10 +92,21 @@ class Node:
 nodes = []
 
 def draw_line(drawing, start, end):
+    '''
+    draws a line from start to end
+    '''
+
     move_to(drawing, start)
     drawing += elm.Line().to(end)
 
 def connect_nodes(drawing, node1: Node=None, node2: Node=None, gate: Gate=None):
+    '''
+    connects two nodes with a gate (possibly one node if the gate is a NOT)
+
+    :param drawing: drawing canvas
+    :param gate: specified gate to use
+    '''
+
     if node1 is None and node2 is None:
         raise Exception("You must specify node1 or node2")
     if gate == Gate.Not:
@@ -110,6 +145,11 @@ d = Drawing()
 height = 0
 
 def draw_exp(expr_tree):
+    '''
+    Main drawing function that draws the circuit
+
+    :param expr_tree: the expression tree to draw
+    '''
     global height
     global d
     if len(str(expr_tree)) == 1:
