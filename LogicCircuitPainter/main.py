@@ -162,41 +162,6 @@ def connect_nodes(drawing, node1: Node=None, node2: Node=None, gate: Gate=None):
 d = Drawing()
 height = 0
 
-# def draw_exp(expr_tree):
-#     '''
-#     Main drawing function that draws the circuit
-#
-#     :param expr_tree: the expression tree to draw
-#     '''
-#     global height
-#     global d
-#     if expr_tree.is_Atom:
-#         move_to(d, (0, height))
-#         dot = elm.Dot(open=True).label(str(expr_tree), loc='left')
-#         d += dot
-#         nodes.append(Node(dot.absanchors['center']))
-#         height += 1
-#     elif isinstance(expr_tree, sp.Not):
-#         draw_exp(expr_tree.args[0])
-#         a = nodes[-1]
-#         nodes.pop()
-#         connect_nodes(d, node1=a, gate=Gate.Not)
-#     elif isinstance(expr_tree, sp.And):
-#         draw_exp(expr_tree.args[0])
-#         draw_exp(expr_tree.args[1])
-#         a = nodes[-1]
-#         b = nodes[-2]
-#         nodes.pop()
-#         nodes.pop()
-#         connect_nodes(d, node1=a, node2=b, gate=Gate.And)
-#     elif isinstance(expr_tree, sp.Or):
-#         draw_exp(expr_tree.args[0])
-#         draw_exp(expr_tree.args[1])
-#         a = nodes[-1]
-#         b = nodes[-2]
-#         nodes.pop()
-#         nodes.pop()
-#         connect_nodes(d, node1=a, node2=b, gate=Gate.Or)
 def draw_exp():
     '''
     Main drawing function that draws the circuit
