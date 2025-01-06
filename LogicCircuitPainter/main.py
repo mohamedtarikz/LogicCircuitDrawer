@@ -1,3 +1,25 @@
+import sympy as sp
+
+in_expr = input("Enter the expression: ")
+
+expr = sp.parse_expr(in_expr)  # '&' for AND, '|' for OR, '~' for NOT
+print("Parsed Expression:", expr)
+
+def parse_tree(expression):
+    if expression.is_Atom:  # Input node (e.g., A, B, C)
+        return {"type": "INPUT", "value": str(expression)}
+    elif isinstance(expression, sp.Not):  # NOT gate
+        return {"type": "NOT", "inputs": [parse_tree(expression.args[0])]}
+    elif isinstance(expression, sp.And):  # AND gate
+        return {"type": "AND", "inputs": [parse_tree(arg) for arg in expression.args]}
+    elif isinstance(expression, sp.Or):  # OR gate
+        return {"type": "OR", "inputs": [parse_tree(arg) for arg in expression.args]}
+    else:
+        raise ValueError(f"Unsupported expression: {expression}")
+
+# Generate the tree
+tree = parse_tree(expr)
+
 import math
 
 # %matplotlib inline
@@ -5,19 +27,10 @@ import schemdraw
 from schemdraw import elements as elm
 from schemdraw import Drawing
 from schemdraw import logic
-import matplotlib
-import warnings
 
-# Suppress warnings about non-interactive backend
-warnings.filterwarnings("ignore", category=UserWarning, module="schemdraw.backends.mpl")
-
-# Set the backend to Agg
-matplotlib.use('Agg')
-
-# Use the matplotlib backend
 schemdraw.use('matplotlib')
 
-def move_to(drawing, target_pos, current_pos=None, diff_x=0, diff_y=0):
+def move_to(drawing, target_pos, current_pos = None, diff_x=0, diff_y=0):
     if current_pos is None:
         current_pos = drawing.here
     dx = target_pos[0] - current_pos[0] + diff_x
@@ -29,17 +42,17 @@ def magnitude(start, end):
     y = (end[1] - start[1]) ** 2
     return math.sqrt(x + y)
 
-def at_line(drawing, start, end, ratio: float=1.0, diff_x=0, diff_y=0):
+def from_path(drawing, start, end, ratio: float=1.0, diff_x=0, diff_y=0):
     if ratio > 1 or ratio < 0 or start is None or end is None:
         raise ValueError("ratio must be between 0 and 1")
     x_pos = (end[0] - start[0]) * ratio
     y_pos = (end[1] - start[1]) * ratio
     move_to(drawing, (start[0] + x_pos, start[1] + y_pos), diff_x=diff_x, diff_y=diff_y)
 
-def goto(drawing, start, end, len=1.0, diff_x=0, diff_y=0):
+def at_path(drawing, start, end, len=1.0, diff_x=0, diff_y=0):
     length = magnitude(start, end)
     ratio = len / length
-    at_line(drawing, start, end, ratio, diff_x, diff_y)
+    from_path(drawing, start, end, ratio, diff_x, diff_y)
 
 from enum import Enum
 
@@ -49,8 +62,8 @@ class Gate(Enum):
     And = 3
 
 class Node:
-    def __init__(self, position):
-        self.pos = position
+    def __init__(self, position, diff_x=0, diff_y=0):
+        self.pos = (position[0]+diff_x, position[1]+diff_y)
 
 nodes = []
 
@@ -58,7 +71,7 @@ def draw_line(drawing, start, end):
     move_to(drawing, start)
     drawing += elm.Line().to(end)
 
-def connect_nodes(drawing, node1: Node, node2: Node, gate: Gate):
+def connect_nodes(drawing, node1: Node=None, node2: Node=None, gate: Gate=None):
     if node1 is None and node2 is None:
         raise Exception("You must specify node1 or node2")
     if gate == Gate.Not:
@@ -68,13 +81,13 @@ def connect_nodes(drawing, node1: Node, node2: Node, gate: Gate):
             move_to(drawing, node2.pos, diff_x=1)
             not_gate = logic.Not().right()
             drawing += not_gate
-            nodes.append(Node(not_gate.absanchors['out']))
+            nodes.append(Node(not_gate.absanchors['out'], diff_x=1))
             draw_line(drawing, node2.pos, not_gate.absanchors['in1'])
         elif node2 is None:
             move_to(drawing, node1.pos, diff_x=1)
             not_gate = logic.Not().right()
             drawing += not_gate
-            nodes.append(Node(not_gate.absanchors['out']))
+            nodes.append(Node(not_gate.absanchors['out'], diff_x=1))
             draw_line(drawing, node1.pos, not_gate.absanchors['in1'])
     else:
         move_to(drawing, (max(node2.pos[0],node1.pos[0]) + 1, (node2.pos[1] + node1.pos[1]) / 2))
@@ -93,33 +106,41 @@ def connect_nodes(drawing, node1: Node, node2: Node, gate: Gate):
             draw_line(drawing, node1.pos, in_gate.absanchors['in2'])
             draw_line(drawing, node2.pos, in_gate.absanchors['in1'])
 
+d = Drawing()
+height = 0
 
-def main_draw(_vars):
-    with Drawing() as d:
-        n = len(_vars)
-        for i in range(n):
-            init_dot = elm.Dot(open=True).label(_vars[i], loc='top')
-            d += init_dot
-            elm.Line().down().length(n)
-            dot = elm.Dot()
-            d += dot
-            nodes.append(Node(dot.absanchors['center']))
-            move_to(d, init_dot.absanchors['center'], diff_x=1)
-            n -= 1
-        while len(nodes):
-            a = nodes[-1]
-            nodes.pop()
-            if len(nodes):
-                b = nodes[-1]
-                nodes.pop()
-                connect_nodes(d, a, b, Gate.And)
-        d.save('my_draw.jpg')
+def draw_exp(expr_tree):
+    global height
+    global d
+    if len(str(expr_tree)) == 1:
+        move_to(d, (0, height))
+        dot = elm.Dot(open=True).label(str(expr_tree), loc='left')
+        d += dot
+        nodes.append(Node(dot.absanchors['center']))
+        height += 1
+    elif isinstance(expr_tree, sp.Not):
+        draw_exp(expr_tree.args[0])
+        a = nodes[-1]
+        nodes.pop()
+        connect_nodes(d, node1=a, gate=Gate.Not)
+    elif isinstance(expr_tree, sp.And):
+        draw_exp(expr_tree.args[0])
+        draw_exp(expr_tree.args[1])
+        a = nodes[-1]
+        b = nodes[-2]
+        nodes.pop()
+        nodes.pop()
+        connect_nodes(d, node1=a, node2=b, gate=Gate.And)
+    elif isinstance(expr_tree, sp.Or):
+        draw_exp(expr_tree.args[0])
+        draw_exp(expr_tree.args[1])
+        a = nodes[-1]
+        b = nodes[-2]
+        nodes.pop()
+        nodes.pop()
+        connect_nodes(d, node1=a, node2=b, gate=Gate.Or)
 
-inputs = []
 
-n = int(input('Enter number of vars: '))
+draw_exp(expr)
 
-for _ in range(n):
-    inputs.append(input('Enter variable: '))
-
-main_draw(inputs)
+d.save('real_draw.jpg')
