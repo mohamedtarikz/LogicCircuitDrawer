@@ -10,7 +10,7 @@ The syntax/format for input (AND = &, OR = |, NOT = ~), those are the only gates
 
 ## Examples:
 ```
-1- [a & b | ~c][examples/example_1.jpg]
-2- [c | (~b & a) | (~d & b)][examples/example_2.jpg]
-3- [a | ~(b & ~(a & d)) | (b & ~(b | (d & ~c)))][examples/example_3.jpg]
+1- ![a & b | ~c][LogicCircuitPainter/examples/example_1.jpg]
+2- ![c | (~b & a) | (~d & b)][LogicCircuitPainter/examples/example_2.jpg]
+3- ![a | ~(b & ~(a & d)) | (b & ~(b | (d & ~c)))][LogicCircuitPainter/examples/example_3.jpg]
 ```
