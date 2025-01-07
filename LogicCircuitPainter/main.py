@@ -11,9 +11,17 @@ from enum import Enum
 
 schemdraw.use('matplotlib') # to export image as .jpg not .svg
 
+print("Format used in entering expressions (AND = &, OR = |, NOT = ~), have a nice trial!")
+
 in_expr = input("Enter the expression: ")
 
-expr = sp.parse_expr(in_expr)  # '&' for AND, '|' for OR, '~' for NOT
+while True:
+    try:
+        expr = sp.parse_expr(in_expr)  # '&' for AND, '|' for OR, '~' for NOT
+        break
+    except SyntaxError:
+        in_expr = input(f"Error: '{in_expr}' is not in valid format, Enter the expression: ")
+
 print("Parsed Expression:", expr)
 
 def postfix(expression):
@@ -35,7 +43,7 @@ def postfix(expression):
 post = postfix(expr)
 
 # function to move drawing brush to a certain coordinate
-def move_to(drawing, target_pos, current_pos = None, diff_x=0, diff_y=0):
+def move_to(drawing, target_pos, current_pos = None, diff_x=0.0, diff_y=0.0):
     '''
     moves drawing brush to a specific coordinate
 
@@ -63,7 +71,7 @@ def magnitude(start, end):
     y = (end[1] - start[1]) ** 2
     return math.sqrt(x + y)
 
-def from_path(drawing, start, end, ratio: float=1.0, diff_x=0, diff_y=0):
+def from_path(drawing, start, end, ratio: float=1.0, diff_x=0.0, diff_y=0.0):
     '''
     moves drawing brush to a position on the line between two points (by ratio)
 
@@ -79,7 +87,7 @@ def from_path(drawing, start, end, ratio: float=1.0, diff_x=0, diff_y=0):
     y_pos = (end[1] - start[1]) * ratio
     move_to(drawing, (start[0] + x_pos, start[1] + y_pos), diff_x=diff_x, diff_y=diff_y)
 
-def at_path(drawing, start, end, len=1.0, diff_x=0, diff_y=0):
+def at_path(drawing, start, end, len=1.0, diff_x=0.0, diff_y=0.0):
     '''
     moves drawing brush to a position on the line between two points (by length)
 
@@ -131,19 +139,19 @@ def connect_nodes(drawing, node1: Node=None, node2: Node=None, gate: Gate=None):
         if node1 is None and node2 is None:
             raise Exception("You must specify node1 or node2")
         if node1 is None:
-            move_to(drawing, node2.pos, diff_x=1)
+            move_to(drawing, node2.pos, diff_x=0.5)
             not_gate = logic.Not().right()
             drawing += not_gate
             nodes.append(Node(not_gate.absanchors['out'], diff_x=1))
             draw_line(drawing, node2.pos, not_gate.absanchors['in1'])
         elif node2 is None:
-            move_to(drawing, node1.pos, diff_x=1)
+            move_to(drawing, node1.pos, diff_x=0.5)
             not_gate = logic.Not().right()
             drawing += not_gate
             nodes.append(Node(not_gate.absanchors['out'], diff_x=1))
             draw_line(drawing, node1.pos, not_gate.absanchors['in1'])
     else:
-        move_to(drawing, (max(node2.pos[0],node1.pos[0]) + 1, (node2.pos[1] + node1.pos[1]) / 2))
+        move_to(drawing, (max(node2.pos[0],node1.pos[0]) + 0.5, (node2.pos[1] + node1.pos[1]) / 2))
         if gate == Gate.And:
             in_gate = logic.And().right()
         elif gate == Gate.Or:
@@ -197,4 +205,19 @@ def draw_exp():
 
 draw_exp()
 
-d.save('real_draw.jpg')
+image_name = input("Enter your image name (with extension, if not entered default is .png): ")
+
+while True:
+    if image_name.__contains__('.'):
+        try:
+            d.save(image_name)
+            break
+        except Exception:
+            image_name = input("Invalid input! Enter your image name (with extension, if not specified default is .jpg): ")
+    else:
+        try:
+            image_name += ".jpg"
+            d.save(image_name)
+            break
+        except Exception:
+            image_name = input("Invalid input! Enter your image name (with extension, if not specifieded default is .jpg): ")
