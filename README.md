@@ -3,10 +3,15 @@ Takes a logical expression from user and draws a logic circuit in an image
 
 ## Dependencies:
 ```
-1- sympy
-2- schemdraw & matplotlib
+1- sympy==1.13.3
+2- schemdraw==0.19
+3- matplotlib==3.10.0
 ```
-
+**To install the required dependencies:**<br>
+download the ```requirements.txt``` file, then run the following command
+```
+pip install -r requirements.txt
+```
 ## Examples:
 **The syntax/format for input (AND = &, OR = |, NOT = ~), those are the only gates used currently.**<br>
 1. ![a & b | ~c](LogicCircuitPainter/examples/example_1.jpg)<br>
