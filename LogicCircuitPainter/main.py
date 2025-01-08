@@ -14,7 +14,7 @@ while True:
         parser.in_expr = input("Invalid Expression! Enter expression: ")
 
 painter = Painter(parser.postfix_expr)
-painter.draw_exp()
+painter.draw_circuit()
 
 image_name = input("Enter name of output image (with extension, if not entered defaults to .jpg): ")
 while True:

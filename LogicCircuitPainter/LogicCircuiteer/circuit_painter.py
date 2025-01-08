@@ -97,7 +97,7 @@ class Painter:
                 self.draw_line(node1.pos, in_gate.absanchors['in2'])
                 self.draw_line(node2.pos, in_gate.absanchors['in1'])
 
-    def draw_exp(self):
+    def draw_circuit(self):
         '''
         Main drawing function that draws the circuit
 
