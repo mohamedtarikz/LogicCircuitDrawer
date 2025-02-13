@@ -2,7 +2,7 @@ from LogicCircuiteer import *
 
 parser = ExprParser()
 
-print("Format used in entering expressions (AND = &, OR = |, NOT = ~), have a nice trial!")
+print("Format used in entering expressions (AND = &, OR = |, NOT = ~, XOR = ^), have a nice trial!")
 parser.in_expr = input("Enter the expression: ")
 
 while True:
