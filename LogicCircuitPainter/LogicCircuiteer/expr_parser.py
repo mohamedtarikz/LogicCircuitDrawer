@@ -30,3 +30,5 @@ class ExprParser:
             return sum((self.convert_to_postfix(arg) for arg in expression.args), []) + ["|"] * (len(expression.args) - 1)
         elif isinstance(expression, sp.And):
             return sum((self.convert_to_postfix(arg) for arg in expression.args), []) + ["&"] * (len(expression.args) - 1)
+        elif isinstance(expression, sp.Xor):
+            return sum((self.convert_to_postfix(arg) for arg in expression.args), []) + ["^"] * (len(expression.args) - 1)

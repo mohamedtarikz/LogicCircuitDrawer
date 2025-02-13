@@ -14,9 +14,13 @@ class Gate(Enum):
     Enumeration of GATES used in the circuit drawing
     '''
 
-    Not = 1
-    Or = 2
-    And = 3
+    Not = logic.Not
+    Or = logic.Or
+    And = logic.And
+    Nand = logic.Nand
+    Nor = logic.Nor
+    Xor = logic.Xor
+    Xnor = logic.Xnor
 
 
 class Node:
@@ -70,24 +74,24 @@ class Painter:
                 raise Exception("You must specify node1 or node2")
             if node1 is None:
                 self.move_to(node2.pos)
-                not_gate = logic.Not().right()
+                not_gate = gate.value().right()
                 self.drawing += not_gate
                 self.nodes.append(Node(not_gate.absanchors['out'], diff_x=1.1))
                 self.draw_line(node2.pos, not_gate.absanchors['in1'])
             elif node2 is None:
                 self.move_to(node1.pos)
-                not_gate = logic.Not().right()
+                not_gate = gate.value().right()
                 self.drawing += not_gate
                 self.nodes.append(Node(not_gate.absanchors['out'], diff_x=1.1))
                 self.draw_line(node1.pos, not_gate.absanchors['in1'])
         else:
             self.move_to((max(node2.pos[0], node1.pos[0]) + 0.5, (node2.pos[1] + node1.pos[1]) / 2))
-            if gate == Gate.And:
-                in_gate = logic.And().right()
-            elif gate == Gate.Or:
-                in_gate = logic.Or().right()
-            else:
+
+            try:
+                in_gate = gate.value().right()
+            except Exception as e:
                 raise Exception("Unexpected Gate!")
+
             self.drawing += in_gate
             self.nodes.append(Node(in_gate.absanchors['out']))
             if node1.pos[1] > node2.pos[1]:
@@ -100,32 +104,41 @@ class Painter:
     def draw_circuit(self):
         '''
         Main drawing function that draws the circuit
-
-        :param expr_tree: the expression tree to draw
         '''
-        for node in self.expression:
-            if node == '~':
+        print(f"postfix: {self.expression}")
+        i = 0
+        while i < len(self.expression):
+            if self.expression[i] == '~':
                 a = self.nodes[-1]
                 self.nodes.pop()
                 self.connect_nodes(node1=a, gate=Gate.Not)
-            elif node == '&':
+            elif self.expression[i] == '&' or self.expression[i] == '|' or self.expression[i] == '^':
                 a = self.nodes[-1]
                 b = self.nodes[-2]
                 self.nodes.pop()
                 self.nodes.pop()
-                self.connect_nodes(node1=a, node2=b, gate=Gate.And)
-            elif node == '|':
-                a = self.nodes[-1]
-                b = self.nodes[-2]
-                self.nodes.pop()
-                self.nodes.pop()
-                self.connect_nodes(node1=a, node2=b, gate=Gate.Or)
+                if i != (len(self.expression) - 1) and self.expression[i+1] == '~':
+                    if self.expression[i] == '&':
+                        self.connect_nodes(node1=a, node2=b, gate=Gate.Nand)
+                    elif self.expression[i] == '|':
+                        self.connect_nodes(node1=a, node2=b, gate=Gate.Nor)
+                    else:
+                        self.connect_nodes(node1=a, node2=b, gate=Gate.Xnor)
+                    i += 1
+                else:
+                    if self.expression[i] == '&':
+                        self.connect_nodes(node1=a, node2=b, gate=Gate.And)
+                    elif self.expression[i] == '|':
+                        self.connect_nodes(node1=a, node2=b, gate=Gate.Or)
+                    else:
+                        self.connect_nodes(node1=a, node2=b, gate=Gate.Xor)
             else:
                 self.move_to((0, self.height))
-                dot = elm.Dot(open=True).label(node, loc='left')
+                dot = elm.Dot(open=True).label(self.expression[i], loc='left')
                 self.drawing += dot
                 self.nodes.append(Node(dot.absanchors['center']))
                 self.height += 1
+            i += 1
 
     def save(self, filename):
         if '.' in filename:
