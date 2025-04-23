@@ -1,5 +1,6 @@
 import sympy as sp
 
+
 class ExprParser:
     def __init__(self, in_expr=None):
         self.in_expr = in_expr
@@ -27,8 +28,11 @@ class ExprParser:
         elif isinstance(expression, sp.Not):
             return self.convert_to_postfix(expression.args[0]) + ["~"]
         elif isinstance(expression, sp.Or):
-            return sum((self.convert_to_postfix(arg) for arg in expression.args), []) + ["|"] * (len(expression.args) - 1)
+            return sum((self.convert_to_postfix(arg) for arg in expression.args), []) + ["|"] * (
+                        len(expression.args) - 1)
         elif isinstance(expression, sp.And):
-            return sum((self.convert_to_postfix(arg) for arg in expression.args), []) + ["&"] * (len(expression.args) - 1)
+            return sum((self.convert_to_postfix(arg) for arg in expression.args), []) + ["&"] * (
+                        len(expression.args) - 1)
         elif isinstance(expression, sp.Xor):
-            return sum((self.convert_to_postfix(arg) for arg in expression.args), []) + ["^"] * (len(expression.args) - 1)
+            return sum((self.convert_to_postfix(arg) for arg in expression.args), []) + ["^"] * (
+                        len(expression.args) - 1)

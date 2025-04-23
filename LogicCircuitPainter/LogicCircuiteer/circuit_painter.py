@@ -1,13 +1,11 @@
-import math
-
 import schemdraw
 from schemdraw import elements as elm
 from schemdraw import Drawing
 from schemdraw import logic
-
-schemdraw.use('matplotlib') # to export image as .jpg not .svg
-
 from enum import Enum
+
+schemdraw.use('matplotlib')  # to export image as .jpg not .svg
+
 
 class Gate(Enum):
     '''
@@ -27,6 +25,7 @@ class Node:
     def __init__(self, position, diff_x=0.0, diff_y=0.0):
         self.pos = (position[0] + diff_x, position[1] + diff_y)
 
+
 class Painter:
     def __init__(self, expression):
         self.expression = expression
@@ -38,7 +37,6 @@ class Painter:
         '''
         moves drawing brush to a specific coordinate
 
-        :param drawing: drawing canvas
         :param target_pos: target coordinate
         :param current_pos: current coordinate
         :param diff_x: constant to be added to the x-coordinate of the target
@@ -63,7 +61,6 @@ class Painter:
         '''
         connects two nodes with a gate (possibly one node if the gate is a NOT)
 
-        :param drawing: drawing canvas
         :param gate: specified gate to use
         '''
 
@@ -117,7 +114,7 @@ class Painter:
                 b = self.nodes[-2]
                 self.nodes.pop()
                 self.nodes.pop()
-                if i != (len(self.expression) - 1) and self.expression[i+1] == '~':
+                if i != (len(self.expression) - 1) and self.expression[i + 1] == '~':
                     if self.expression[i] == '&':
                         self.connect_nodes(node1=a, node2=b, gate=Gate.Nand)
                     elif self.expression[i] == '|':
